@@ -20,7 +20,7 @@ const debugObj = {
   cam_orient: "py",
 };
 
-const prmeGeneator = new THREE.PMREMGenerator(renderer);
+// const prmeGeneator = new THREE.PMREMGenerator(renderer);
 
 const gui = new GUI();
 
@@ -99,8 +99,8 @@ function init() {
   cubeCamera = new THREE.CubeCamera(1, 1000, cubeRenderTarget);
   // cubeCamera.renderTarget= cubeRenderTarget;
   // material.envMap= cubeRenderTarget.texture;
-  const render_target = prmeGeneator.fromEquirectangular(textures["px"]);
-  material.envMap = render_target;
+  // const render_target = prmeGeneator.fromEquirectangular(textures["px"]);
+  // material.envMap = render_target;
 
   gui
     .add(debugObj, "material_used", ["cubeCamera", "hdr"])
@@ -115,8 +115,9 @@ function init() {
     .add(debugObj, "cam_orient", ["nx", "ny", "px", "py"])
     .onChange((value) => {
       console.log(debugObj.cam_orient);
-      const render_target = prmeGeneator.fromEquirectangular(textures[value]);
-      material.envMap = render_target;
+      // const render_target = prmeGeneator.fromEquirectangular(textures[value]);
+      // material.envMap = render_target;
+      material.envMap= textures[debugObj.cam_orient];
     });
 
   controls = new OrbitControls(camera, renderer.domElement);
