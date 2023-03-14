@@ -1,30 +1,28 @@
 import * as THREE from "three";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GlTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/dracoloader.js";
+
+import { gsap } from "gsap";
 
 import { GUI } from "lil-gui";
 
 let camera, scene, renderer;
-// let cube, sphere, torus, material;
 
 let controls;
 const loader = new GLTFLoader();
 
-// const prmeGeneator = new THREE.PMREMGenerator(renderer);
-
 const gui = new GUI();
 
-// const rgbeLoader = new RGBELoader();
+const CAMERA_HEIGHT = 10;
 
-const textures = {
-  nx: undefined,
-  ny: undefined,
-  px: undefined,
-  py: undefined,
-};
+const pointer = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+const intersection = new THREE.Vector3();
+let marker;
+
+let plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
 init();
 
@@ -45,7 +43,9 @@ function init() {
     1,
     1000
   );
-  camera.position.z = 75;
+  camera.position.z = 10;
+  camera.position.y = CAMERA_HEIGHT;
+  camera.rotation.x = -2;
 
   scene = new THREE.Scene();
 
@@ -53,9 +53,58 @@ function init() {
   DracoLoader.setDecoderPath("/draco/");
   loader.setDRACOLoader(DracoLoader);
 
-  // loader.load('models/', (gltf) => {
-  //   console.log(gltf.scene);
-  // });
+  loader.load("checker.glb", (gltf) => {
+    console.log(gltf.scene);
+    scene.add(gltf.scene);
+    // plane = gltf.scene.children[0];
+    // gsap.to(plane.rotation, {duration: 10, y: 36});
+  });
+
+  /**
+   * Marker
+   */
+  marker = new THREE.Mesh(
+    new THREE.BoxGeometry(2, 2, 2),
+    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+  );
+  scene.add(marker);
+
+  /**
+   * Marker END
+   */
+
+  /**
+   * mouse tracking
+   */
+  window.addEventListener("pointermove", (e) => {
+    pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  });
+  /**
+   * mouse tracking END
+   */
+  /**
+   * move the camera
+   */
+  let drag= false;
+  const move_cam = () => {
+    const new_pos = { ...marker.position };
+    new_pos.y = CAMERA_HEIGHT;
+    // controls.enabled= false;
+    gsap.to(camera.position, { duration: 2, x: new_pos.x, z: new_pos.z, onComplete: ()=>{/*controls.enabled= true*/} });
+    // gsap.to(camera.rotation, { duration: 2, y: camera.rotation.y, x: camera.rotation.x, z: camera.rotation.z, onComplete: ()=>{/*controls.enabled= true*/} });
+  };
+  window.addEventListener('mousedown', () => drag= false);
+  window.addEventListener('mousemove', () => drag= true);
+  window.addEventListener('mouseup', () => {
+    if(!drag){
+      move_cam();
+    }
+    drag= false;
+  });
+  /**
+   * move the camera END
+   */
 
   controls = new OrbitControls(camera, renderer.domElement);
 }
@@ -68,10 +117,20 @@ function onWindowResized() {
 }
 
 function animation() {
-
   controls.update();
 
-  renderer.render(scene, camera);
+  /**
+   * cast ray
+   */
+  raycaster.setFromCamera(pointer, camera);
+  if (plane) {
+    raycaster.ray.intersectPlane(plane, intersection);
+    marker.position.x = intersection.x;
+    marker.position.z = intersection.z;
+    // console.log(intersection);
+  }
 
-  //   stats.update();
+  // console.log(camera.rotation);
+
+  renderer.render(scene, camera);
 }
