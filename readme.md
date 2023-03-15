@@ -1,16 +1,16 @@
-# Three.js Journey
+# Navigation test with three JS
 
-## Setup
-Download [Node.js](https://nodejs.org/en/download/).
-Run this followed commands:
+## Usage
+Needs [Node.js] : (https://nodejs.org/en/download/).
+
 
 ``` bash
-# Install dependencies (only the first time)
+# Install the dependencies
 npm install
 
-# Run the local server at localhost:8080
+# To run the project
 npm run dev
 
-# Build for production in the dist/ directory
+# Creating a build (output is dist/ folder)
 npm run build
 ```

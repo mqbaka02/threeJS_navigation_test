@@ -45,7 +45,15 @@ function init() {
   );
   camera.position.z = 10;
   camera.position.y = CAMERA_HEIGHT;
-  camera.rotation.x = -2;
+  // camera.rotation.x = 2;
+  let cam_rot= gui.addFolder("camera rot");
+  cam_rot.add(camera.rotation, 'x').min(0).max(2*Math.PI).step(.1);
+  cam_rot.add(camera.rotation, 'z').min(0).max(2*Math.PI).step(.1);
+  cam_rot.add(camera.rotation, 'y').min(0).max(2*Math.PI).step(.1);
+  let cam_pos= gui.addFolder("camera pos");
+  cam_pos.add(camera.position, 'x').min(-50).max(50).step(.1);
+  cam_pos.add(camera.position, 'z').min(-50).max(50).step(.1);
+  cam_pos.add(camera.position, 'y').min(-50).max(50).step(.1);
 
   scene = new THREE.Scene();
 
@@ -90,9 +98,8 @@ function init() {
   const move_cam = () => {
     const new_pos = { ...marker.position };
     new_pos.y = CAMERA_HEIGHT;
-    // controls.enabled= false;
+    // var thing= {...camera.rotation};
     gsap.to(camera.position, { duration: 2, x: new_pos.x, z: new_pos.z, onComplete: ()=>{/*controls.enabled= true*/} });
-    // gsap.to(camera.rotation, { duration: 2, y: camera.rotation.y, x: camera.rotation.x, z: camera.rotation.z, onComplete: ()=>{/*controls.enabled= true*/} });
   };
   window.addEventListener('mousedown', () => drag= false);
   window.addEventListener('mousemove', () => drag= true);
@@ -106,7 +113,8 @@ function init() {
    * move the camera END
    */
 
-  controls = new OrbitControls(camera, renderer.domElement);
+  // controls = new OrbitControls(camera, renderer.domElement);
+  // controls.enabled= false;
 }
 
 function onWindowResized() {
@@ -117,7 +125,7 @@ function onWindowResized() {
 }
 
 function animation() {
-  controls.update();
+  // controls.update();
 
   /**
    * cast ray
