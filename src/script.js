@@ -10,7 +10,7 @@ import { GUI } from "lil-gui";
 
 let camera, scene, renderer;
 
-let controls;
+let controls, is_moving= false;
 const loader = new GLTFLoader();
 
 const gui = new GUI();
@@ -96,10 +96,22 @@ function init() {
    */
   let drag= false;
   const move_cam = () => {
+    is_moving= true;
+    const offset= {
+      x: controls.target.x - camera.position.x,
+      y: controls.target.y - camera.position.y,
+      z: controls.target.z - camera.position.z
+    };
+    console.log(offset);
     const new_pos = { ...marker.position };
     new_pos.y = CAMERA_HEIGHT;
     // var thing= {...camera.rotation};
-    gsap.to(camera.position, { duration: 2, x: new_pos.x, z: new_pos.z, onComplete: ()=>{/*controls.enabled= true*/} });
+    gsap.to(camera.position, { duration: 2, x: new_pos.x, z: new_pos.z, onComplete: ()=>{
+      controls.target.x= offset.x + camera.position.x;
+      controls.target.y= offset.x + camera.position.y;
+      controls.target.z= offset.x + camera.position.z;
+      is_moving= false;
+    } });
   };
   window.addEventListener('mousedown', () => drag= false);
   window.addEventListener('mousemove', () => drag= true);
@@ -113,8 +125,8 @@ function init() {
    * move the camera END
    */
 
-  // controls = new OrbitControls(camera, renderer.domElement);
-  // controls.enabled= false;
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enabled= true;
 }
 
 function onWindowResized() {
@@ -125,7 +137,9 @@ function onWindowResized() {
 }
 
 function animation() {
-  // controls.update();
+  if(!is_moving){
+    controls.update();
+  }
 
   /**
    * cast ray
