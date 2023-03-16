@@ -8,9 +8,13 @@ import { gsap } from "gsap";
 
 import { GUI } from "lil-gui";
 
-let camera, scene, renderer;
+let camera,
+  scene,
+  renderer,
+  drag = false;//indicating if the user is draging his mouse down
 
-let controls, is_moving= false;
+let controls,
+  camera_is_moving = false;
 const loader = new GLTFLoader();
 
 const gui = new GUI();
@@ -22,9 +26,9 @@ const raycaster = new THREE.Raycaster();
 const intersection = new THREE.Vector3();
 let marker;
 
-let plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+let plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);//collider for the raycast, it will make sense further down
 
-init();
+init();//everything is here
 
 function init() {
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -46,14 +50,28 @@ function init() {
   camera.position.z = 10;
   camera.position.y = CAMERA_HEIGHT;
   // camera.rotation.x = 2;
-  let cam_rot= gui.addFolder("camera rot");
-  cam_rot.add(camera.rotation, 'x').min(0).max(2*Math.PI).step(.1);
-  cam_rot.add(camera.rotation, 'z').min(0).max(2*Math.PI).step(.1);
-  cam_rot.add(camera.rotation, 'y').min(0).max(2*Math.PI).step(.1);
-  let cam_pos= gui.addFolder("camera pos");
-  cam_pos.add(camera.position, 'x').min(-50).max(50).step(.1);
-  cam_pos.add(camera.position, 'z').min(-50).max(50).step(.1);
-  cam_pos.add(camera.position, 'y').min(-50).max(50).step(.1);
+
+
+  // let cam_rot = gui.addFolder("camera rot");
+  // cam_rot
+  //   .add(camera.rotation, "x")
+  //   .min(0)
+  //   .max(2 * Math.PI)
+  //   .step(0.1);
+  // cam_rot
+  //   .add(camera.rotation, "z")
+  //   .min(0)
+  //   .max(2 * Math.PI)
+  //   .step(0.1);
+  // cam_rot
+  //   .add(camera.rotation, "y")
+  //   .min(0)
+  //   .max(2 * Math.PI)
+  //   .step(0.1);
+  // let cam_pos = gui.addFolder("camera pos");
+  // cam_pos.add(camera.position, "x").min(-50).max(50).step(0.1);
+  // cam_pos.add(camera.position, "z").min(-50).max(50).step(0.1);
+  // cam_pos.add(camera.position, "y").min(-50).max(50).step(0.1);
 
   scene = new THREE.Scene();
 
@@ -64,19 +82,19 @@ function init() {
   loader.load("checker.glb", (gltf) => {
     console.log(gltf.scene);
     scene.add(gltf.scene);
-    // plane = gltf.scene.children[0];
-    // gsap.to(plane.rotation, {duration: 10, y: 36});
   });
+
+
 
   /**
    * Marker
    */
+  //a red cube used as cursor for moving the camera
   marker = new THREE.Mesh(
     new THREE.BoxGeometry(2, 2, 2),
     new THREE.MeshBasicMaterial({ color: 0xff0000 })
   );
   scene.add(marker);
-
   /**
    * Marker END
    */
@@ -91,42 +109,76 @@ function init() {
   /**
    * mouse tracking END
    */
+
   /**
    * move the camera
    */
-  let drag= false;
+  drag = false;//I'll leave it there just for safety :D
   const move_cam = () => {
-    is_moving= true;
-    const offset= {
+
+    // console.log(`Before: `);
+    // console.log(camera.rotation);
+
+    camera_is_moving = true;
+    const offset = {//I'll use this to locate the target of the camera
       x: controls.target.x - camera.position.x,
       y: controls.target.y - camera.position.y,
-      z: controls.target.z - camera.position.z
+      z: controls.target.z - camera.position.z,
     };
-    console.log(offset);
-    const new_pos = { ...marker.position };
+
+    // console.log("Offset is :");
+    // console.log(offset);
+
+    const new_pos = { ...marker.position };//we'll gonna move the camera to this location, we're copying the object because marker.position is going to be constantly changing
     new_pos.y = CAMERA_HEIGHT;
-    // var thing= {...camera.rotation};
-    gsap.to(camera.position, { duration: 2, x: new_pos.x, z: new_pos.z, onComplete: ()=>{
-      controls.target.x= offset.x + camera.position.x;
-      controls.target.y= offset.x + camera.position.y;
-      controls.target.z= offset.x + camera.position.z;
-      is_moving= false;
-    } });
+    gsap.to(camera.position, {
+      duration: 2,
+      x: new_pos.x,
+      y: new_pos.y,
+      z: new_pos.z,
+
+      onComplete: () => {
+        controls.target.x = offset.x + camera.position.x;
+        // controls.target.y= offset.x + camera.position.y;
+        controls.target.z = offset.x + camera.position.z;
+
+        // console.log(`After :`);
+        // console.log(camera.rotation);
+        // console.log("Offset is :");
+
+        offset.x = controls.target.x - camera.position.x;
+        offset.y = controls.target.y - camera.position.y;
+        offset.z = controls.target.z - camera.position.z;
+        // console.log(offset);
+        camera_is_moving = false;
+      }
+
+    });
   };
-  window.addEventListener('mousedown', () => drag= false);
-  window.addEventListener('mousemove', () => drag= true);
-  window.addEventListener('mouseup', () => {
-    if(!drag){
+
+  //the following is to make sure that the camera changes position only when the user clicks and not when he is dragging his mouse down
+  const mouse_is_moving = () => {
+    drag = true;
+  };
+  window.addEventListener("mousedown", () => {
+    drag = false;
+    window.addEventListener("mousemove", mouse_is_moving);//as soon as the mouse moves
+  });
+  window.addEventListener("mouseup", () => {
+
+    window.removeEventListener("mousemove", mouse_is_moving);//to avoid calling the function when the mouse button is up
+
+    if (!drag) {//if user lifts mouse button without moving the mouse
       move_cam();
     }
-    drag= false;
+    drag = false;
   });
   /**
    * move the camera END
    */
 
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.enabled= true;
+  controls.enabled = true;
 }
 
 function onWindowResized() {
@@ -137,9 +189,11 @@ function onWindowResized() {
 }
 
 function animation() {
-  if(!is_moving){
+  if (!camera_is_moving) {
     controls.update();
   }
+
+  marker.visible = !drag;
 
   /**
    * cast ray
