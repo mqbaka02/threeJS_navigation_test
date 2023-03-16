@@ -11,7 +11,9 @@ import { GUI } from "lil-gui";
 let camera,
   scene,
   renderer,
-  drag = false;//indicating if the user is draging his mouse down
+  drag = false; //indicating if the user is draging his mouse down
+
+let clicked_in_gui;
 
 let controls,
   camera_is_moving = false;
@@ -24,11 +26,16 @@ const CAMERA_HEIGHT = 10;
 const pointer = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 const intersection = new THREE.Vector3();
-let marker;
+let marker, debugCube;
 
-let plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);//collider for the raycast, it will make sense further down
+debugCube = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.MeshBasicMaterial({ color: 0x0000ff })
+);
 
-init();//everything is here
+let plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); //collider for the raycast, it will make sense further down
+
+init(); //everything is here
 
 function init() {
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -50,7 +57,6 @@ function init() {
   camera.position.z = 10;
   camera.position.y = CAMERA_HEIGHT;
   // camera.rotation.x = 2;
-
 
   // let cam_rot = gui.addFolder("camera rot");
   // cam_rot
@@ -75,6 +81,8 @@ function init() {
 
   scene = new THREE.Scene();
 
+  scene.add(debugCube);
+
   const DracoLoader = new DRACOLoader();
   DracoLoader.setDecoderPath("/draco/");
   loader.setDRACOLoader(DracoLoader);
@@ -83,8 +91,6 @@ function init() {
     console.log(gltf.scene);
     scene.add(gltf.scene);
   });
-
-
 
   /**
    * Marker
@@ -113,24 +119,26 @@ function init() {
   /**
    * move the camera
    */
-  drag = false;//I'll leave it there just for safety :D
+  drag = false; //I'll leave it there just for safety :D
   const move_cam = () => {
-
     // console.log(`Before: `);
     // console.log(camera.rotation);
 
     camera_is_moving = true;
-    const offset = {//I'll use this to locate the target of the camera
+    const offset = {
+      //I'll use this to locate the target of the camera
       x: controls.target.x - camera.position.x,
       y: controls.target.y - camera.position.y,
       z: controls.target.z - camera.position.z,
     };
 
+    const current_rot= new THREE.Euler().copy(camera.rotation);
+
     // console.log("Offset is :");
     // console.log(offset);
 
-    const new_pos = { ...marker.position };//we'll gonna move the camera to this location, we're copying the object because marker.position is going to be constantly changing
-    new_pos.y = CAMERA_HEIGHT;
+    const new_pos = { ...marker.position }; //we'll gonna move the camera to this location, we're copying the object because marker.position is going to be constantly changing
+    new_pos.y = camera.position.y;
     gsap.to(camera.position, {
       duration: 2,
       x: new_pos.x,
@@ -138,9 +146,11 @@ function init() {
       z: new_pos.z,
 
       onComplete: () => {
-        controls.target.x = offset.x + camera.position.x;
+        // controls.target.x = offset.x + camera.position.x;
         // controls.target.y= offset.x + camera.position.y;
-        controls.target.z = offset.x + camera.position.z;
+        // controls.target.z = offset.x + camera.position.z;
+
+        // camera.rotation.copy(current_rot);
 
         // console.log(`After :`);
         // console.log(camera.rotation);
@@ -151,8 +161,12 @@ function init() {
         offset.z = controls.target.z - camera.position.z;
         // console.log(offset);
         camera_is_moving = false;
-      }
-
+      },
+    });
+    gsap.to(controls.target, {
+      duration: 2,
+      x: offset.x + new_pos.x,
+      z: offset.z + new_pos.z
     });
   };
 
@@ -160,18 +174,28 @@ function init() {
   const mouse_is_moving = () => {
     drag = true;
   };
-  window.addEventListener("mousedown", () => {
-    drag = false;
-    window.addEventListener("mousemove", mouse_is_moving);//as soon as the mouse moves
+  window.addEventListener("mousedown", (e) => {
+    const gui_UI= document.querySelector('.lil-gui.allow-touch-styles.root.autoPlace');
+    if(gui_UI.contains(e.target)){//if the user clicks in lil-gui's UI then don't move that camera !!!
+      clicked_in_gui= true;
+    } else {
+      clicked_in_gui= false;
+      // console.log(gui_UI);
+      // console.log(controls.target);
+      // console.log(debugCube.position);
+      drag = false;
+      window.addEventListener("mousemove", mouse_is_moving); //as soon as the mouse moves
+    }
   });
   window.addEventListener("mouseup", () => {
+    window.removeEventListener("mousemove", mouse_is_moving); //to avoid calling the function when the mouse button is up
 
-    window.removeEventListener("mousemove", mouse_is_moving);//to avoid calling the function when the mouse button is up
-
-    if (!drag) {//if user lifts mouse button without moving the mouse
+    if (!drag && !clicked_in_gui) {
+      //if user lifts mouse button without moving the mouse
       move_cam();
     }
     drag = false;
+    clicked_in_gui= false;
   });
   /**
    * move the camera END
@@ -179,6 +203,8 @@ function init() {
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enabled = true;
+  // debugCube.visible= false;
+  gui.add(debugCube, 'visible').name('Show camera target');
 }
 
 function onWindowResized() {
@@ -189,9 +215,12 @@ function onWindowResized() {
 }
 
 function animation() {
-  if (!camera_is_moving) {
+  if (!camera_is_moving||true) {//no need for this anymore
     controls.update();
   }
+
+  debugCube.position.set(controls.target.x, controls.target.y, controls.target.z);
+  // console.log(debugCube.position);
 
   marker.visible = !drag;
 
