@@ -9,10 +9,11 @@ import { gsap } from "gsap";
 import { GUI } from "lil-gui";
 
 const CAMERA_KEYBOARD_SPEED = 0.3;
-const LEFT_KEY = 37;
-const RIGHT_KEY = 39;
-const UP_KEY = 38;
-const DOWN_KEY = 40; //kamo be za hitadidy dia ataoko anaty const ^^'
+const CAMERA_TRANSLATION_DURATION= 1;
+const LEFT_KEY = "ArrowLeft";
+const RIGHT_KEY = "ArrowRight";
+const UP_KEY = "ArrowUp";
+const DOWN_KEY = "ArrowDown"; //kamo be za hitadidy dia ataoko anaty const ^^'
 let forward_pressed = false;
 let back_pressed = false;
 let left_pressed = false;
@@ -137,6 +138,7 @@ function init() {
   const move_cam = () => {
     camera_is_moving = true;
     controls.enabled = false;
+    // marker.visible= false;
     const offset = {
       //I'll use this to locate the target of the camera
       x: controls.target.x - camera.position.x,
@@ -152,7 +154,7 @@ function init() {
     const new_pos = { ...marker.position }; //we'll gonna move the camera to this location, we're copying the object because marker.position is going to be constantly changing
     new_pos.y = camera.position.y;
     gsap.to(camera.position, {
-      duration: 2,
+      duration: CAMERA_TRANSLATION_DURATION,
       x: new_pos.x,
       y: new_pos.y,
       z: new_pos.z,
@@ -164,10 +166,11 @@ function init() {
 
         camera_is_moving = false;
         controls.enabled = true;
+        // marker.visible= true;
       },
     });
     gsap.to(controls.target, {
-      duration: 2,
+      duration: CAMERA_TRANSLATION_DURATION,
       x: offset.x + new_pos.x,
       z: offset.z + new_pos.z,
     });
@@ -209,26 +212,26 @@ function init() {
    */
   const key_is_down = (e) => {
     // console.log(e.keyCode);
-    if (e.keyCode === UP_KEY) {
+    if (e.code === UP_KEY) {
       forward_pressed = true;
-    } else if (e.keyCode === DOWN_KEY) {
+    } if (e.code === DOWN_KEY) {
       back_pressed = true;
-    } else if (e.keyCode === LEFT_KEY) {
+    } if (e.code === LEFT_KEY) {
       left_pressed = true;
-    } else if (e.keyCode === RIGHT_KEY) {
+    } if (e.code === RIGHT_KEY) {
       right_pressed = true;
     }
   };
   window.addEventListener("keydown", key_is_down);
 
   window.addEventListener("keyup", (e) => {
-    if (e.keyCode === UP_KEY) {
+    if (e.code === UP_KEY) {
       forward_pressed = false;
-    } else if (e.keyCode === DOWN_KEY) {
+    } if (e.code === DOWN_KEY) {
       back_pressed = false;
-    } else if (e.keyCode === LEFT_KEY) {
+    } if (e.code === LEFT_KEY) {
       left_pressed = false;
-    } else if (e.keyCode === RIGHT_KEY) {
+    } if (e.code === RIGHT_KEY) {
       right_pressed = false;
     }
   });
@@ -258,18 +261,19 @@ function onWindowResized() {
 function animation() {
   controls.update();
 
-  if (forward_pressed) {
-    camera_local_movement.z = CAMERA_KEYBOARD_SPEED;
-  } else if (back_pressed) {
+  if (back_pressed) {
     camera_local_movement.z = -CAMERA_KEYBOARD_SPEED;
+  } else if (forward_pressed) {
+    camera_local_movement.z = CAMERA_KEYBOARD_SPEED;
     console.log(camera.position);
-    console.log(camera_global_movement);
+    // console.log(camera_global_movement);
   } else {
     camera_local_movement.z = 0;
   }
 
   if (left_pressed) {
     camera_local_movement.x = -CAMERA_KEYBOARD_SPEED;
+    console.log(camera.position);
   } else if (right_pressed) {
     camera_local_movement.x = CAMERA_KEYBOARD_SPEED;
   } else {
@@ -280,10 +284,10 @@ function animation() {
     camera.quaternion
   );
 
-  camera.position.x += camera_global_movement.x;
-  controls.target.x += camera_global_movement.x;
   camera.position.z += camera_global_movement.z;
   controls.target.z += camera_global_movement.z;
+  camera.position.x += camera_global_movement.x;
+  controls.target.x += camera_global_movement.x;
 
   debugCube.position.set(
     controls.target.x,
@@ -291,7 +295,7 @@ function animation() {
     controls.target.z
   );
 
-  marker.visible = !drag;
+  marker.visible = !drag && !camera_is_moving;
 
   /**
    * cast ray
