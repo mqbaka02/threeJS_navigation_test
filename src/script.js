@@ -18,8 +18,6 @@ let forward_pressed = false;
 let back_pressed = false;
 let left_pressed = false;
 let right_pressed = false;
-let camera_local_movement_angle = 0;
-let camera_global_movement_angle = 0;
 let camera_local_movement = new THREE.Vector3(0, 0, 0);
 let camera_global_movement = new THREE.Vector3(0, 0, 0);
 
@@ -71,28 +69,6 @@ function init() {
   );
   camera.position.z = 10;
   camera.position.y = CAMERA_HEIGHT;
-  // camera.rotation.x = 2;
-
-  // let cam_rot = gui.addFolder("camera rot");
-  // cam_rot
-  //   .add(camera.rotation, "x")
-  //   .min(0)
-  //   .max(2 * Math.PI)
-  //   .step(0.1);
-  // cam_rot
-  //   .add(camera.rotation, "z")
-  //   .min(0)
-  //   .max(2 * Math.PI)
-  //   .step(0.1);
-  // cam_rot
-  //   .add(camera.rotation, "y")
-  //   .min(0)
-  //   .max(2 * Math.PI)
-  //   .step(0.1);
-  // let cam_pos = gui.addFolder("camera pos");
-  // cam_pos.add(camera.position, "x").min(-50).max(50).step(0.1);
-  // cam_pos.add(camera.position, "z").min(-50).max(50).step(0.1);
-  // cam_pos.add(camera.position, "y").min(-50).max(50).step(0.1);
 
   scene = new THREE.Scene();
 
@@ -305,10 +281,7 @@ function animation() {
     raycaster.ray.intersectPlane(plane, intersection);
     marker.position.x = intersection.x;
     marker.position.z = intersection.z;
-    // console.log(intersection);
   }
-
-  // console.log(camera.rotation);
 
   renderer.render(scene, camera);
 }
