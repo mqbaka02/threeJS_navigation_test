@@ -8,6 +8,20 @@ import { gsap } from "gsap";
 
 import { GUI } from "lil-gui";
 
+const CAMERA_KEYBOARD_SPEED = 0.3;
+const LEFT_KEY = 37;
+const RIGHT_KEY = 39;
+const UP_KEY = 38;
+const DOWN_KEY = 40; //kamo be za hitadidy dia ataoko anaty const ^^'
+let forward_pressed = false;
+let back_pressed = false;
+let left_pressed = false;
+let right_pressed = false;
+let camera_local_movement_angle = 0;
+let camera_global_movement_angle = 0;
+let camera_local_movement = new THREE.Vector3(0, 0, 0);
+let camera_global_movement = new THREE.Vector3(0, 0, 0);
+
 let camera,
   scene,
   renderer,
@@ -117,14 +131,12 @@ function init() {
    */
 
   /**
-   * move the camera
+   * move the camera with mouse
    */
   drag = false; //I'll leave it there just for safety :D
   const move_cam = () => {
-    // console.log(`Before: `);
-    // console.log(camera.rotation);
-
     camera_is_moving = true;
+    controls.enabled = false;
     const offset = {
       //I'll use this to locate the target of the camera
       x: controls.target.x - camera.position.x,
@@ -132,7 +144,7 @@ function init() {
       z: controls.target.z - camera.position.z,
     };
 
-    const current_rot= new THREE.Euler().copy(camera.rotation);
+    const current_rot = new THREE.Euler().copy(camera.rotation);
 
     // console.log("Offset is :");
     // console.log(offset);
@@ -146,27 +158,18 @@ function init() {
       z: new_pos.z,
 
       onComplete: () => {
-        // controls.target.x = offset.x + camera.position.x;
-        // controls.target.y= offset.x + camera.position.y;
-        // controls.target.z = offset.x + camera.position.z;
-
-        // camera.rotation.copy(current_rot);
-
-        // console.log(`After :`);
-        // console.log(camera.rotation);
-        // console.log("Offset is :");
-
         offset.x = controls.target.x - camera.position.x;
         offset.y = controls.target.y - camera.position.y;
         offset.z = controls.target.z - camera.position.z;
-        // console.log(offset);
+
         camera_is_moving = false;
+        controls.enabled = true;
       },
     });
     gsap.to(controls.target, {
       duration: 2,
       x: offset.x + new_pos.x,
-      z: offset.z + new_pos.z
+      z: offset.z + new_pos.z,
     });
   };
 
@@ -175,14 +178,14 @@ function init() {
     drag = true;
   };
   window.addEventListener("mousedown", (e) => {
-    const gui_UI= document.querySelector('.lil-gui.allow-touch-styles.root.autoPlace');
-    if(gui_UI.contains(e.target)){//if the user clicks in lil-gui's UI then don't move that camera !!!
-      clicked_in_gui= true;
+    const gui_UI = document.querySelector(
+      ".lil-gui.allow-touch-styles.root.autoPlace"
+    );
+    if (gui_UI.contains(e.target)) {
+      //if the user clicks in lil-gui's UI then don't move that camera !!!
+      clicked_in_gui = true;
     } else {
-      clicked_in_gui= false;
-      // console.log(gui_UI);
-      // console.log(controls.target);
-      // console.log(debugCube.position);
+      clicked_in_gui = false;
       drag = false;
       window.addEventListener("mousemove", mouse_is_moving); //as soon as the mouse moves
     }
@@ -195,16 +198,54 @@ function init() {
       move_cam();
     }
     drag = false;
-    clicked_in_gui= false;
+    clicked_in_gui = false;
   });
   /**
-   * move the camera END
+   * move the camera with mouse END
+   */
+
+  /**
+   * move cam with keyboard
+   */
+  const key_is_down = (e) => {
+    // console.log(e.keyCode);
+    if (e.keyCode === UP_KEY) {
+      forward_pressed = true;
+    } else if (e.keyCode === DOWN_KEY) {
+      back_pressed = true;
+    } else if (e.keyCode === LEFT_KEY) {
+      left_pressed = true;
+    } else if (e.keyCode === RIGHT_KEY) {
+      right_pressed = true;
+    }
+  };
+  window.addEventListener("keydown", key_is_down);
+
+  window.addEventListener("keyup", (e) => {
+    if (e.keyCode === UP_KEY) {
+      forward_pressed = false;
+    } else if (e.keyCode === DOWN_KEY) {
+      back_pressed = false;
+    } else if (e.keyCode === LEFT_KEY) {
+      left_pressed = false;
+    } else if (e.keyCode === RIGHT_KEY) {
+      right_pressed = false;
+    }
+  });
+
+  /**
+   * move camera with keyboard END
    */
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enabled = true;
   // debugCube.visible= false;
-  gui.add(debugCube, 'visible').name('Show camera target');
+  gui
+    .add(debugCube, "visible")
+    .name("Show camera target")
+    .onChange(() => {
+      console.log(camera.rotation);
+    });
 }
 
 function onWindowResized() {
@@ -215,12 +256,40 @@ function onWindowResized() {
 }
 
 function animation() {
-  if (!camera_is_moving||true) {//no need for this anymore
-    controls.update();
+  controls.update();
+
+  if (forward_pressed) {
+    camera_local_movement.z = CAMERA_KEYBOARD_SPEED;
+  } else if (back_pressed) {
+    camera_local_movement.z = -CAMERA_KEYBOARD_SPEED;
+    console.log(camera.position);
+    console.log(camera_global_movement);
+  } else {
+    camera_local_movement.z = 0;
   }
 
-  debugCube.position.set(controls.target.x, controls.target.y, controls.target.z);
-  // console.log(debugCube.position);
+  if (left_pressed) {
+    camera_local_movement.x = -CAMERA_KEYBOARD_SPEED;
+  } else if (right_pressed) {
+    camera_local_movement.x = CAMERA_KEYBOARD_SPEED;
+  } else {
+    camera_local_movement.x = 0;
+  }
+
+  camera_global_movement = camera_local_movement.applyQuaternion(
+    camera.quaternion
+  );
+
+  camera.position.x += camera_global_movement.x;
+  controls.target.x += camera_global_movement.x;
+  camera.position.z += camera_global_movement.z;
+  controls.target.z += camera_global_movement.z;
+
+  debugCube.position.set(
+    controls.target.x,
+    controls.target.y,
+    controls.target.z
+  );
 
   marker.visible = !drag;
 
