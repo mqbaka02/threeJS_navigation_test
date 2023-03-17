@@ -234,9 +234,7 @@ function onWindowResized() {
   camera.updateProjectionMatrix();
 }
 
-function animation() {
-  controls.update();
-
+const handle_camera_keyboard= ()=>{
   if (back_pressed) {
     camera_local_movement.z = -CAMERA_KEYBOARD_SPEED;
   } else if (forward_pressed) {
@@ -264,6 +262,12 @@ function animation() {
   controls.target.z += camera_global_movement.z;
   camera.position.x += camera_global_movement.x;
   controls.target.x += camera_global_movement.x;
+};
+
+function animation() {
+  controls.update();
+
+  handle_camera_keyboard();
 
   debugCube.position.set(
     controls.target.x,
