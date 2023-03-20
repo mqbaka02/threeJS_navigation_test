@@ -5,6 +5,7 @@ const LEFT_KEY = "ArrowLeft";
 const RIGHT_KEY = "ArrowRight";
 const UP_KEY = "ArrowUp";
 const DOWN_KEY = "ArrowDown"; //kamo be za hitadidy dia ataoko anaty const ^^'
+const CAMERA_KEYBOARD_SPEED = 0.3;
 
 class Point_and_click {
   constructor(camera, controls, scene, plane) {
@@ -24,6 +25,13 @@ class Point_and_click {
     this.camera_is_moving = false;
     this.mouse_is_dragging = false;
     this.clicked_in_gui = false;
+
+    this.forward_pressed = false;
+    this.backwards_pressed = false;
+    this.right_pressed = false;
+    this.left_pressed = false;
+    this.camera_local_movement = new THREE.Vector3(0, 0, 0);
+    this.camera_global_movement = new THREE.Vector3(0, 0, 0);
   }
 
   move_cam = () => {
@@ -42,7 +50,7 @@ class Point_and_click {
 
     const new_pos = { ...this.marker.position }; //we'll gonna move the camera to this location, we're copying the object because marker.position is going to be constantly changing
     new_pos.y = this.camera.position.y;
-    console.log(new_pos);
+    // console.log(new_pos);
 
     gsap.to(this.camera.position, {
       duration: this.camera_travel_duration,
@@ -58,7 +66,7 @@ class Point_and_click {
         this.camera_is_moving = false;
         this.controls.enabled = true;
 
-        console.log(this.camera.position);
+        // console.log(this.camera.position);
         // marker.visible= true;
       },
     });
@@ -109,8 +117,7 @@ class Point_and_click {
   }
 
   update_marker() {
-    this.marker.visible =
-      !this.mouse_is_dragging && !this.camera_is_moving;
+    this.marker.visible = !this.mouse_is_dragging && !this.camera_is_moving;
 
     /**
      * cast ray
@@ -123,13 +130,88 @@ class Point_and_click {
     }
   }
 
-  track_mouse= () => {
+  track_mouse = () => {
     window.addEventListener("pointermove", (e) => {
       this.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
     });
   };
 
+  listen_to_keyboard() {
+    const key_is_down = (e) => {
+      // console.log(e.keyCode);
+      if (e.code === UP_KEY) {
+        this.forward_pressed = true;
+      }
+      if (e.code === DOWN_KEY) {
+        this.back_pressed = true;
+      }
+      if (e.code === LEFT_KEY) {
+        this.left_pressed = true;
+      }
+      if (e.code === RIGHT_KEY) {
+        this.right_pressed = true;
+      }
+    };
+    window.addEventListener("keydown", key_is_down);
+
+    window.addEventListener("keyup", (e) => {
+      if (e.code === UP_KEY) {
+        this.forward_pressed = false;
+      }
+      if (e.code === DOWN_KEY) {
+        this.back_pressed = false;
+      }
+      if (e.code === LEFT_KEY) {
+        this.left_pressed = false;
+      }
+      if (e.code === RIGHT_KEY) {
+        this.right_pressed = false;
+      }
+    });
+  }
+
+  handle_camera_keyboard = () => {
+    if (this.back_pressed) {
+      this.camera_local_movement.z = -CAMERA_KEYBOARD_SPEED;
+    } else if (this.forward_pressed) {
+      this.camera_local_movement.z = CAMERA_KEYBOARD_SPEED;
+    } else {
+      this.camera_local_movement.z = 0;
+    }
+
+    if (this.left_pressed) {
+      this.camera_local_movement.x = -CAMERA_KEYBOARD_SPEED;
+    } else if (this.right_pressed) {
+      this.camera_local_movement.x = CAMERA_KEYBOARD_SPEED;
+    } else {
+      this.camera_local_movement.x = 0;
+    }
+
+    this.camera_global_movement = this.camera_local_movement.applyQuaternion(
+      this.camera.quaternion
+    );
+    // this.camera_global_movement= this.camera_local_movement;
+
+    this.camera.position.z += this.camera_global_movement.z;
+    this.controls.target.z += this.camera_global_movement.z;
+
+    this.camera.position.x += this.camera_global_movement.x;
+    this.controls.target.x += this.camera_global_movement.x;
+    // console.log(this.camera_global_movement);
+  };
+
+  ato_daholo_ilay_zavatra() {
+    this.add_marker();
+    this.track_mouse();
+    this.detect_click();
+    this.listen_to_keyboard();
+  }
+
+  update_everything(){
+    this.update_marker();
+    this.handle_camera_keyboard();
+  }
 }
 
 export default Point_and_click;
