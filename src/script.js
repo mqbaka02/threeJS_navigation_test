@@ -50,6 +50,7 @@ function init() {
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enabled = true;
+  // controls.listenToKeyEvents( window );
 
   scene = new THREE.Scene();
 

@@ -174,9 +174,9 @@ class Point_and_click {
 
   handle_camera_keyboard = () => {
     if (this.back_pressed) {
-      this.camera_local_movement.z = CAMERA_KEYBOARD_SPEED;
-    } else if (this.forward_pressed) {
       this.camera_local_movement.z = -CAMERA_KEYBOARD_SPEED;
+    } else if (this.forward_pressed) {
+      this.camera_local_movement.z = CAMERA_KEYBOARD_SPEED;
     } else {
       this.camera_local_movement.z = 0;
     }
@@ -189,14 +189,14 @@ class Point_and_click {
       this.camera_local_movement.x = 0;
     }
 
-    // this.camera_global_movement = this.camera_local_movement.applyQuaternion(
-    //   this.camera.quaternion
-    // );
+    this.camera_global_movement = this.camera_local_movement.applyQuaternion(
+      this.camera.quaternion
+    );
     // this.camera_global_movement.set(this.camera_local_movement);
-    this.camera_global_movement.x= this.camera_local_movement.x;
-    this.camera_global_movement.y= this.camera_local_movement.y;
-    this.camera_global_movement.z= this.camera_local_movement.z;
-    this.camera_global_movement.applyAxisAngle(new Vector3(0, 1, 0), this.camera.rotation.y);
+    // this.camera_global_movement.x= this.camera_local_movement.x;
+    // this.camera_global_movement.y= this.camera_local_movement.y;
+    // this.camera_global_movement.z= this.camera_local_movement.z;
+    // this.camera_global_movement.applyAxisAngle(new Vector3(0, 1, 0), this.camera.rotation.y);
 
     this.camera.position.z += this.camera_global_movement.z;
     this.controls.target.z += this.camera_global_movement.z;
