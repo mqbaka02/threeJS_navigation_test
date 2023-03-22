@@ -6,7 +6,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/dracoloader.js";
 
 import { GUI } from "lil-gui";
 
-import Point_and_click from "./Point_and_click/Point_and_click";
+import Point_and_click from "./Point_and_click/Point_and_click";//ity ilay class ho an'izay mila azy..
 
 let camera, scene, renderer;
 

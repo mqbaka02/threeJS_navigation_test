@@ -192,11 +192,6 @@ class Point_and_click {
     this.camera_global_movement = this.camera_local_movement.applyQuaternion(
       this.camera.quaternion
     );
-    // this.camera_global_movement.set(this.camera_local_movement);
-    // this.camera_global_movement.x= this.camera_local_movement.x;
-    // this.camera_global_movement.y= this.camera_local_movement.y;
-    // this.camera_global_movement.z= this.camera_local_movement.z;
-    // this.camera_global_movement.applyAxisAngle(new Vector3(0, 1, 0), this.camera.rotation.y);
 
     this.camera.position.z += this.camera_global_movement.z;
     this.controls.target.z += this.camera_global_movement.z;
